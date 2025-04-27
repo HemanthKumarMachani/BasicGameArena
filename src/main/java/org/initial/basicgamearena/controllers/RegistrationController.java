@@ -1,46 +1,47 @@
 package org.initial.basicgamearena.controllers;
 
+import jakarta.validation.Valid;
+import org.initial.basicgamearena.dto.PlayerRequestDTO;
+import org.initial.basicgamearena.dto.PlayerResponseDTO;
+import org.initial.basicgamearena.model.Player;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api")
 public class RegistrationController {
 
-    @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@RequestBody UserRegistrationRequest request) {
-        // Log to verify it received
-        System.out.println("Received registration: " + request);
+    private final Map<String, Player> players = new ConcurrentHashMap<>();
 
-        // Just send back a simple response
-        return ResponseEntity.ok("User registered: " + request.getUsername());
+    @PostMapping("/register")
+    public ResponseEntity<PlayerResponseDTO> registerPlayer(@Valid @RequestBody PlayerRequestDTO request) {
+        Player player = new Player();
+        player.setId(UUID.randomUUID().toString());
+        player.setUsername(request.getUsername());
+        player.setPassword(request.getPassword());
+        player.setX(0);
+        player.setY(0);
+        player.setHealth(100);
+        player.setScore(0);
+
+        players.put(player.getId(), player);
+
+        PlayerResponseDTO response = new PlayerResponseDTO();
+        response.setId(player.getId());
+        response.setX(player.getX());
+        response.setY(player.getY());
+        response.setHealth(player.getHealth());
+        response.setScore(player.getScore());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    // DTO class
-    public static class UserRegistrationRequest {
-        private String username;
-        private String password;
-
-        // Getters and Setters
-        public String getUsername() {
-            return username;
-        }
-        public void setUsername(String username) {
-            this.username = username;
-        }
-        public String getPassword() {
-            return password;
-        }
-        public void setPassword(String password) {
-            this.password = password;
-        }
-
-        @Override
-        public String toString() {
-            return "UserRegistrationRequest{username='" + username + "', password='" + password + "'}";
-        }
+    public Map<String, Player> getPlayers() {
+        return players;
     }
 }

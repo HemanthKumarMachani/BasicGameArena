@@ -1,29 +1,25 @@
 package org.initial.basicgamearena.controllers;
+
 import org.initial.basicgamearena.model.Player;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
 @RequestMapping("/api")
 public class GameController {
 
-    private final Map<String, Player> players = new ConcurrentHashMap<>();
+    private final RegistrationController registrationController;
 
-    @PostMapping("/register")
-    public Player registerPlayer() {
-        String id = UUID.randomUUID().toString();
-        Player player = new Player(id, 0, 0, 100, 0);
-        players.put(id, player);
-        return player;
+    @Autowired
+    public GameController(RegistrationController registrationController) {
+        this.registrationController = registrationController;
     }
 
     @PostMapping("/move/{id}")
     public ResponseEntity<?> movePlayer(@PathVariable String id, @RequestParam int x, @RequestParam int y) {
-        Player player = players.get(id);
+        Player player = registrationController.getPlayers().get(id);
         if (player == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Player not found!");
         }
@@ -33,23 +29,30 @@ public class GameController {
     }
 
     @PostMapping("/attack/{attackerId}/{targetId}")
-    public String attackPlayer(@PathVariable String attackerId, @PathVariable String targetId) {
+    public ResponseEntity<String> attackPlayer(@PathVariable String attackerId, @PathVariable String targetId) {
+        var players = registrationController.getPlayers();
         Player attacker = players.get(attackerId);
         Player target = players.get(targetId);
+
         if (attacker == null || target == null) {
-            return "One of the players does not exist!";
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("One of the players does not exist!");
         }
+
         target.setHealth(target.getHealth() - 10);
         if (target.getHealth() <= 0) {
             attacker.setScore(attacker.getScore() + 100);
             players.remove(targetId);
-            return "Target eliminated!";
+            return ResponseEntity.ok("Target eliminated!");
         }
-        return "Attack successful!";
+        return ResponseEntity.ok("Attack successful!");
     }
 
     @GetMapping("/state/{id}")
-    public Player getPlayerState(@PathVariable String id) {
-        return players.get(id);
+    public ResponseEntity<?> getPlayerState(@PathVariable String id) {
+        Player player = registrationController.getPlayers().get(id);
+        if (player == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Player not found!");
+        }
+        return ResponseEntity.ok(player);
     }
 }
