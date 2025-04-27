@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  basicgamearena:
+    image: basicgamearena
+    container_name: basicgamearena-app
+    ports:
+      - "8085:8081"
+    restart: always

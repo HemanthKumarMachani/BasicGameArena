@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: basicgamearena
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: basicgamearena
+  template:
+    metadata:
+      labels:
+        app: basicgamearena
+    spec:
+      containers:
+        - name: basicgamearena
+          image: hemanthkumarmachani/basicgamearena
+          ports:
+            - containerPort: 8081
