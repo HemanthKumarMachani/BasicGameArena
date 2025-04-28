@@ -4,19 +4,22 @@ import jakarta.validation.Valid;
 import org.initial.basicgamearena.dto.PlayerRequestDTO;
 import org.initial.basicgamearena.dto.PlayerResponseDTO;
 import org.initial.basicgamearena.model.Player;
+import org.initial.basicgamearena.service.PlayerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/player")
 public class RegistrationController {
 
-    private final Map<String, Player> players = new ConcurrentHashMap<>();
+    private final PlayerService playerService;
+
+    public RegistrationController(PlayerService playerService) {
+        this.playerService = playerService;
+    }
 
     @PostMapping("/register")
     public ResponseEntity<PlayerResponseDTO> registerPlayer(@Valid @RequestBody PlayerRequestDTO request) {
@@ -29,7 +32,7 @@ public class RegistrationController {
         player.setHealth(100);
         player.setScore(0);
 
-        players.put(player.getId(), player);
+        playerService.registerPlayer(player);
 
         PlayerResponseDTO response = new PlayerResponseDTO();
         response.setId(player.getId());
@@ -39,9 +42,5 @@ public class RegistrationController {
         response.setScore(player.getScore());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    public Map<String, Player> getPlayers() {
-        return players;
     }
 }

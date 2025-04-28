@@ -1,7 +1,7 @@
 package org.initial.basicgamearena.controllers;
 
 import org.initial.basicgamearena.model.Player;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.initial.basicgamearena.service.PlayerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,16 +10,15 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api")
 public class GameController {
 
-    private final RegistrationController registrationController;
+    private final PlayerService playerService;
 
-    @Autowired
-    public GameController(RegistrationController registrationController) {
-        this.registrationController = registrationController;
+    public GameController(PlayerService playerService) {
+        this.playerService = playerService;
     }
 
     @PostMapping("/move/{id}")
     public ResponseEntity<?> movePlayer(@PathVariable String id, @RequestParam int x, @RequestParam int y) {
-        Player player = registrationController.getPlayers().get(id);
+        Player player = playerService.getPlayer(id);
         if (player == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Player not found!");
         }
@@ -30,9 +29,8 @@ public class GameController {
 
     @PostMapping("/attack/{attackerId}/{targetId}")
     public ResponseEntity<String> attackPlayer(@PathVariable String attackerId, @PathVariable String targetId) {
-        var players = registrationController.getPlayers();
-        Player attacker = players.get(attackerId);
-        Player target = players.get(targetId);
+        Player attacker = playerService.getPlayer(attackerId);
+        Player target = playerService.getPlayer(targetId);
 
         if (attacker == null || target == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("One of the players does not exist!");
@@ -41,7 +39,7 @@ public class GameController {
         target.setHealth(target.getHealth() - 10);
         if (target.getHealth() <= 0) {
             attacker.setScore(attacker.getScore() + 100);
-            players.remove(targetId);
+            playerService.removePlayer(targetId);
             return ResponseEntity.ok("Target eliminated!");
         }
         return ResponseEntity.ok("Attack successful!");
@@ -49,7 +47,7 @@ public class GameController {
 
     @GetMapping("/state/{id}")
     public ResponseEntity<?> getPlayerState(@PathVariable String id) {
-        Player player = registrationController.getPlayers().get(id);
+        Player player = playerService.getPlayer(id);
         if (player == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Player not found!");
         }
